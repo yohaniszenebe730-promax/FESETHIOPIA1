@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>SLIPNET VPN Manager + Media Downloader</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0b0e1a;
+            --card: #131829;
+            --card2: #1a2140;
+            --accent: #00e5ff;
+            --accent2: #7c4dff;
+            --green: #00e676;
+            --orange: #ff9100;
+            --red: #ff1744;
+            --text: #e8eaf6;
+            --muted: #7a7f9a;
+            --radius: 14px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.6);
+        }
+        html, body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+
+        header {
+            background: linear-gradient(135deg, var(--card2), #0d1333);
+            padding: 18px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 20px; color: #000; flex-shrink: 0;
+        }
+        .logo-text h1 {
+            font-size: 20px; font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo-text small { color: var(--muted); font-size: 12px; }
+        .telegram-link {
+            background: #1e3a5f; padding: 8px 16px; border-radius: 30px;
+            font-size: 13px; font-weight: 600; color: #fff;
+            display: inline-flex; align-items: center; gap: 6px; transition: .2s;
+        }
+        .telegram-link:hover { background: #2a4f7c; text-decoration: none; }
+
+        .tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn {
+            flex: 1; min-width: 120px; padding: 12px 10px; border: none;
+            border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+            background: var(--card); color: var(--muted); transition: .2s; text-align: center;
+        }
+        .tab-btn:hover { background: var(--card2); color: var(--text); }
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #000; box-shadow: 0 4px 20px rgba(0,229,255,0.3);
+        }
+        .tab-btn .badge {
+            display: inline-block; background: var(--red); color: #fff;
+            font-size: 10px; padding: 2px 7px; border-radius: 20px; margin-left: 5px;
+        }
+
+        .panel { display: none; animation: fadeUp .3s ease; }
+        .panel.active { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card {
+            background: var(--card); border-radius: var(--radius);
+            padding: 20px; margin-bottom: 18px; box-shadow: var(--shadow);
+        }
+        .card-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+        textarea, input[type="text"], input[type="url"] {
+            width: 100%; padding: 14px 16px; border: 2px solid var(--card2);
+            border-radius: 10px; background: var(--bg); color: var(--text);
+            font-size: 14px; font-family: inherit; transition: .2s; resize: vertical;
+        }
+        textarea:focus, input:focus {
+            outline: none; border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,229,255,0.15);
+        }
+        textarea { min-height: 120px; font-family: 'Courier New', monospace; font-size: 13px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+        .input-group { margin-bottom: 14px; }
+
+        .btn {
+            padding: 12px 28px; border: none; border-radius: 10px; font-size: 15px;
+            font-weight: 700; cursor: pointer; transition: .2s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #000; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,229,255,0.35); }
+        .btn-green { background: var(--green); color: #000; }
+        .btn-green:hover { box-shadow: 0 6px 24px rgba(0,230,118,0.35); transform: translateY(-2px); }
+        .btn-orange { background: var(--orange); color: #000; }
+        .btn-orange:hover { box-shadow: 0 6px 24px rgba(255,145,0,0.35); transform: translateY(-2px); }
+        .btn-red { background: var(--red); color: #fff; }
+        .btn-outline { background: transparent; border: 2px solid var(--card2); color: var(--text); }
+        .btn-outline:hover { border-color: var(--accent); }
+        .btn-sm { padding: 8px 16px; font-size: 13px; }
+        .btn-block { width: 100%; justify-content: center; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+
+        .quality-select {
+            padding: 10px 14px; border: 2px solid var(--card2); border-radius: 10px;
+            background: var(--bg); color: var(--text); font-size: 14px; cursor: pointer;
+        }
+        .quality-select:focus { outline: none; border-color: var(--accent); }
+
+        .config-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .category-group { margin-bottom: 18px; }
+        .category-header {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 16px; border-radius: 10px; margin-bottom: 8px;
+            cursor: pointer; user-select: none; transition: .2s;
+        }
+        .category-header .arrow { transition: transform .2s; }
+        .category-header.collapsed .arrow { transform: rotate(-90deg); }
+        .category-header .count { font-size: 12px; color: var(--muted); margin-left: auto; }
+        .category-items { display: flex; flex-direction: column; gap: 6px; padding-left: 12px; }
+        .category-items.hidden { display: none; }
+
+        .cat-ethio { background: rgba(0,230,118,0.12); border-left: 4px solid var(--green); }
+        .cat-ethio .category-header { color: var(--green); }
+        .cat-safari { background: rgba(0,229,255,0.12); border-left: 4px solid var(--accent); }
+        .cat-safari .category-header { color: var(--accent); }
+        .cat-other { background: rgba(124,77,255,0.12); border-left: 4px solid var(--accent2); }
+        .cat-other .category-header { color: var(--accent2); }
+
+        .config-item {
+            background: var(--card2); border-radius: 10px; padding: 12px 16px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+            border-left: 3px solid var(--accent); transition: .2s;
+        }
+        .config-item:hover { background: #1e2755; }
+        .config-item .name { font-weight: 600; flex: 1; min-width: 120px; word-break: break-word; font-size: 14px; }
+        .config-item .name .sub { font-size: 11px; color: var(--muted); font-weight: 400; display: block; }
+        .config-item .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .config-item .status { font-size: 12px; color: var(--muted); }
+        .config-item .status.connected { color: var(--green); }
+
+        .result-box {
+            background: var(--card2); border-radius: 10px; padding: 16px;
+            margin-top: 12px; display: none; word-break: break-word;
+        }
+        .result-box.show { display: block; }
+        .result-box .meta { font-size: 14px; margin-bottom: 12px; line-height: 1.6; }
+        .result-box .meta strong { color: var(--text); }
+        .result-box .dl-links { display: flex; gap: 10px; flex-wrap: wrap; }
+        .progress-bar {
+            height: 6px; background: var(--card2); border-radius: 3px;
+            margin: 10px 0; overflow: hidden;
+        }
+        .progress-bar .fill {
+            height: 100%; background: linear-gradient(90deg, var(--accent), var(--green));
+            border-radius: 3px; transition: width .3s; width: 0%;
+        }
+
+        .help-note {
+            background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2);
+            border-radius: 10px; padding: 12px 16px; font-size: 13px; color: var(--muted); margin-top: 8px;
+        }
+        .help-note code {
+            background: rgba(0,0,0,.3); padding: 2px 6px; border-radius: 4px; font-size: 12px; color: var(--accent);
+        }
+
+        .toast-container {
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .toast {
+            background: var(--card2); color: var(--text); padding: 14px 20px;
+            border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            border-left: 4px solid var(--accent); font-size: 13px;
+            animation: slideIn .3s ease; max-width: 360px;
+        }
+        .toast.error { border-left-color: var(--red); }
+        .toast.success { border-left-color: var(--green); }
+        @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .spinner {
+            display: inline-block; width: 18px; height: 18px;
+            border: 3px solid rgba(255,255,255,.2); border-top-color: #fff;
+            border-radius: 50%; animation: spin .6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .downloader-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        @media (max-width: 700px) { .downloader-grid { grid-template-columns: 1fr; } }
+
+        footer { text-align: center; padding: 30px 20px; color: var(--muted); font-size: 13px; }
+
+        .preview-thumb {
+            width: 100%; max-height: 200px; object-fit: cover;
+            border-radius: 8px; margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo-area">
+            <div class="logo-icon">SN</div>
+            <div class="logo-text">
+                <h1>SLIPNET VPN Manager</h1>
+                <small>Config Importer • YouTube • TikTok Downloader</small>
+            </div>
+        </div>
+        <a class="telegram-link" href="https://t.me/Free_Ethio_server_FES" target="_blank">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+            @Free_Ethio_server_FES
+        </a>
+    </header>
+
+    <!-- TABS -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="vpn">&#128274; VPN Configs <span class="badge" id="configCount">0</span></button>
+        <button class="tab-btn" data-tab="youtube">&#9654; YouTube Downloader</button>
+        <button class="tab-btn" data-tab="tiktok">&#119809; TikTok Downloader</button>
+    </div>
+
+    <!-- ===== VPN TAB ===== -->
+    <div class="panel active" id="panel-vpn">
+        <!-- Import -->
+        <div class="card">
+            <div class="card-title">&#128229; Import SLIPNET Configs</div>
+            <div class="input-group">
+                <label for="configInput">Paste config URIs (comma, newline, or mixed separated)</label>
+                <textarea id="configInput" placeholder="(ETHIO 1)slipnet-enc://AdK6/3LRSBvKCdRNHPpVlSH1u47pTy8WLTikQ/I27kjD17fe0z2+TmiZ7UGkyCvpXIA6X3HGz6piQnX3j0yGocoIo3jF+pRF5iNeydkYX114tZBw+Pbe4brfgwpJt+XNz9vDCVijHQagOnV9Ab2A8MT73AfseQ9AOyu+Uh3G6Sv5VOxTcZUJsBuz6AatY69iMIVqffeq6ESyJviG74Gr3iYowIVboBjiUKiQvGUluk4o9Ns9qBE1Q5t7hD46GfTuLA2nSvP1iOVymsvv+kh6H0GhXhWezTcD0JC1q29g+lYd2gTHcIFxTKwjvm1gIfi7zaKghmn2Vnf27X5WKuT8Di54lwNEQGmigYoAkBDNL4raExD6GAQItYyp3a2Zx4N4XGKam8NglAwfNlqk6aUQOC3F6SBfju0fQFLGnHnzHDcbFe/k4H9KnNr5GmT9d5/Ulg0ZXdHraxlnnf6bShxnt0xQkBpB2N4RzWD+9jNS0dgpcA0G3s2E09GCwG+E+/wDssl0kzSOKzKGBGsUhVshZsu95dn6ue+j2+JOa52f3IjNFiFK9dMmujJm2fjt1fkY6Lr6J1WQQ793o7Cs2zZg5du+zwlbEtXyRWF14G1Tp1KPTBzL8pnHO7hc6WXHjHmDdm2ZFX7Fq8TtIc/OIRJa+PKV6HiUKJfrXWc8vgTSaauHKuhm0qvFISZiSYb0N+eZg1sx77YHaKpYxasTjoGKUpIKJ1kWj0BOcwe+iy0gOXE3Fkj6Epdhyq3nd0RHGoNGQ/Ug7ucd6+DrkfgNGJME3WYRyctQx6Fnd39MQoV3rnlzY9xqd8T+7cA6TlMFPcPHKGCE6HHQ+GJNTZ/OYPNc6kCWVQgdTgcI7PHFQYPBVV9j++561Gi0qamIOHdjl8VhL1BDAjiwYk9yeUBOj9acVikUCKwiPrfsCdNCaDB8kvWOKa4DNVoq4RyyJuDVDbOPmdDQ9diHI0I843Jj9QueVxoVqZgUl9xbT5MEYtFqb/tTeXeNgGPC3IngfeitCl8zepkywaEaWXvoQ2cVDwtm+9M=)"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="importConfigs()">&#9889; Import Configs</button>
+                <button class="btn btn-outline" onclick="document.getElementById('fileInput').click()">&#128194; Import from File</button>
+                <input type="file" id="fileInput" accept=".txt,.conf,.cfg" style="display:none" onchange="importFromFile(event)">
+                <button class="btn btn-outline" onclick="clearAllConfigs()">&#128465; Clear All</button>
+            </div>
+            <div class="help-note">
+                <strong>&#8505; Format:</strong> <code>(Category Name)slipnet-enc://...</code> or <code>slipnet-enc://...,Category</code>.<br>
+                Categories: <strong>Ethio</strong>, <strong>Safari</strong>, or any custom name. Configs auto-categorize.
+            </div>
+        </div>
+
+        <!-- Categorized Configs -->
+        <div class="card">
+            <div class="card-title">&#128451; Your Configs by Category <span id="configCountLabel" style="color:var(--muted);font-size:14px;"></span></div>
+            <div id="configListContainer">
+                <div id="categoriesContainer"></div>
+                <div id="emptyState" style="text-align:center;padding:30px 0;color:var(--muted);">
+                    <div style="font-size:40px;margin-bottom:10px;">&#128073;</div>
+                    <div>No configs yet. Paste URIs above and click <strong>Import</strong>, or use <strong>Import from File</strong>.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk -->
+        <div class="card" id="bulkConnectCard" style="display:none;">
+            <div class="card-title">&#9889; Quick Actions</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-green" onclick="connectAll()">&#128279; Import All to SLIPNET</button>
+                <button class="btn btn-outline" onclick="exportConfigs()">&#128230; Export as .txt</button>
+            </div>
+            <p style="font-size:13px;color:var(--muted);margin-top:10px;">
+                Each config opens in the SLIPNET app via deep link. Your browser may ask for permission.
+            </p>
+        </div>
+    </div>
+
+    <!-- ===== YOUTUBE TAB ===== -->
+    <div class="panel" id="panel-youtube">
+        <div class="card">
+            <div class="card-title">&#9654; YouTube Video Downloader</div>
+            <div class="input-group">
+                <label for="ytUrl">YouTube Video URL</label>
+                <input type="url" id="ytUrl" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..." />
+            </div>
+            <div class="input-group">
+                <label for="ytQuality">Quality / Format</label>
+                <select id="ytQuality" class="quality-select">
+                    <option value="mp4-720p">MP4 - 720p (Recommended)</option>
+                    <option value="mp4-1080p">MP4 - 1080p Full HD</option>
+                    <option value="mp4-480p">MP4 - 480p</option>
+                    <option value="mp4-360p">MP4 - 360p</option>
+                    <option value="mp3-128">MP3 - 128kbps Audio</option>
+                    <option value="mp3-320">MP3 - 320kbps Audio</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="fetchYouTubeInfo()">&#128269; Get Info</button>
+                <button class="btn btn-green" onclick="downloadYouTubeDirect()">&#128229; Download Now</button>
+            </div>
+            <div class="progress-bar" id="ytProgressBar"><div class="fill" id="ytProgressFill"></div></div>
+            <div class="result-box" id="ytResult">
+                <div class="meta" id="ytMeta"></div>
+                <div id="ytThumbContainer"></div>
+                <div class="dl-links" id="ytLinks"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TIKTOK TAB ===== -->
+    <div class="panel" id="panel-tiktok">
+        <div class="card">
+            <div class="card-title">&#119809; TikTok Downloader (No Watermark)</div>
+            <div class="input-group">
+                <label for="ttUrl">TikTok Video URL</label>
+                <input type="url" id="ttUrl" placeholder="https://www.tiktok.com/@user/video/..." />
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="fetchTikTokInfo()">&#128269; Get Info</button>
+                <button class="btn btn-green" onclick="downloadTikTokDirect()">&#128229; Download Now</button>
+            </div>
+            <div class="progress-bar" id="ttProgressBar"><div class="fill" id="ttProgressFill"></div></div>
+            <div class="result-box" id="ttResult">
+                <div class="meta" id="ttMeta"></div>
+                <div class="dl-links" id="ttLinks"></div>
+            </div>
+            <div class="help-note" style="margin-top:14px;">
+                <strong>&#8505; Powered by TikWM API</strong> — Downloads are watermark-free. If a download fails, try a different video URL.
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Made for Ethio FES community &bull; <a href="https://t.me/Free_Ethio_server_FES" target="_blank">Join Telegram</a>
+    </footer>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============================================================
+//   CONFIG STORAGE & CATEGORIES
+// ============================================================
+
+const STORAGE_KEY = 'slipnet_configs_v2';
+
+function getConfigs() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+}
+function saveConfigs(configs) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(configs));
+    renderConfigs();
+}
+
+function categorizeConfig(name, uri, tag) {
+    const upper = (name + ' ' + (tag || '')).toUpperCase();
+    if (upper.includes('ETHIO') || upper.includes('FES') || name.toLowerCase().includes('ethio') || name.toLowerCase().includes('fes')) {
+        return 'ethio';
+    }
+    if (upper.includes('SAFARI') || upper.includes('SAFARICOM')) {
+        return 'safari';
+    }
+    return 'other';
+}
+
+function getCategoryLabel(cat) {
+    const map = { ethio: '🇪🇹 Ethio FES / FREE INTERNET', safari: '📡 SAFARI / SAFARICOM FREE', other: '📁 Other Configs' };
+    return map[cat] || cat;
+}
+function getCategoryClass(cat) {
+    const map = { ethio: 'cat-ethio', safari: 'cat-safari', other: 'cat-other' };
+    return map[cat] || 'cat-other';
+}
+function getCategoryColor(cat) {
+    const map = { ethio: 'var(--green)', safari: 'var(--accent)', other: 'var(--accent2)' };
+    return map[cat] || 'var(--accent2)';
+}
+
+function parseConfigs(text) {
+    const lines = text.split(/[, \n]+/).filter(s => s.trim());
+    const results = [];
+
+    for (let part of lines) {
+        part = part.trim();
+        if (!part) continue;
+
+        let name = null;
+        let uri = part;
+        let tag = null;
+
+        // Pattern: (Title)slipnet-enc://...
+        const parenMatch = part.match(/^\(([^)]*)\)\s*(slipnet(?:-enc)?:\/\/.+)/);
+        if (parenMatch) {
+            name = parenMatch[1].trim() || null;
+            uri = parenMatch[2].trim();
+        } else {
+            // Pattern: slipnet-enc://... rest
+            const m = part.match(/^(slipnet(?:-enc)?:\/\/[^\s,]+)[,\s]*(.*)?$/);
+            if (m) {
+                uri = m[1].trim();
+                const rest = (m[2] || '').trim();
+                if (rest) {
+                    tag = rest;
+                }
+            }
+        }
+
+        if (uri.startsWith('slipnet://') || uri.startsWith('slipnet-enc://')) {
+            if (!name) {
+                name = tag || `Config ${results.length + 1}`;
+            }
+            const cat = categorizeConfig(name, uri, tag);
+            results.push({ name, uri, tag: tag || '', category: cat, connected: false });
+        }
+    }
+    return results;
+}
+
+function importConfigs() {
+    const text = document.getElementById('configInput').value.trim();
+    if (!text) { showToast('Paste your SLIPNET config URIs first.', 'error'); return; }
+    const parsed = parseConfigs(text);
+    if (parsed.length === 0) { showToast('No valid slipnet:// or slipnet-enc:// URIs found.', 'error'); return; }
+    const existing = getConfigs();
+    const merged = [...existing, ...parsed];
+    saveConfigs(merged);
+    document.getElementById('configInput').value = '';
+    showToast(`Imported ${parsed.length} config(s) successfully!`, 'success');
+}
+
+function importFromFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const text = e.target.result;
+        document.getElementById('configInput').value = text;
+        importConfigs();
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+function clearAllConfigs() {
+    if (!confirm('Remove all saved configs?')) return;
+    saveConfigs([]);
+    showToast('All configs cleared.', 'success');
+}
+
+function removeConfig(idx) {
+    const configs = getConfigs();
+    configs.splice(idx, 1);
+    saveConfigs(configs);
+}
+
+function copyConfig(idx) {
+    const configs = getConfigs();
+    const uri = configs[idx].uri;
+    navigator.clipboard.writeText(uri).then(() => showToast('Config URI copied!', 'success'))
+    .catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = uri; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+        showToast('Config URI copied!', 'success');
+    });
+}
+
+function openConfig(idx) {
+    const configs = getConfigs();
+    const cfg = configs[idx];
+    cfg.connected = true;
+    saveConfigs(configs);
+    try { window.location.href = cfg.uri; showToast(`Opening "${cfg.name}" in SLIPNET...`, 'success'); }
+    catch(e) { showToast('Could not open SLIPNET. Is the app installed?', 'error'); cfg.connected = false; saveConfigs(configs); }
+    setTimeout(() => {
+        const c = getConfigs();
+        if (c[idx]) { c[idx].connected = false; saveConfigs(c); }
+    }, 30000);
+}
+
+function connectAll() {
+    const configs = getConfigs();
+    if (configs.length === 0) { showToast('No configs.', 'error'); return; }
+    configs.forEach((cfg, idx) => {
+        setTimeout(() => {
+            const c = getConfigs();
+            if (c[idx]) { c[idx].connected = true; saveConfigs(c); }
+            try { window.location.href = cfg.uri; } catch(e) {}
+        }, idx * 800);
+    });
+    showToast(`Opening ${configs.length} configs in SLIPNET...`, 'success');
+}
+
+function exportConfigs() {
+    const configs = getConfigs();
+    if (configs.length === 0) { showToast('No configs to export.', 'error'); return; }
+    const text = configs.map(c => `(${c.name})${c.uri}`).join(',\n');
+    const blob = new Blob([text], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'slipnet_configs.txt'; a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Configs exported!', 'success');
+}
+
+function renderConfigs() {
+    const configs = getConfigs();
+    const container = document.getElementById('categoriesContainer');
+    const empty = document.getElementById('emptyState');
+    const countLabel = document.getElementById('configCountLabel');
+    const badge = document.getElementById('configCount');
+    const bulkCard = document.getElementById('bulkConnectCard');
+
+    badge.textContent = configs.length;
+    if (configs.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        countLabel.textContent = '';
+        bulkCard.style.display = 'none';
+        return;
+    }
+    empty.style.display = 'none';
+    countLabel.textContent = `(${configs.length} saved)`;
+    bulkCard.style.display = 'block';
+
+    // Group by category
+    const groups = { ethio: [], safari: [], other: [] };
+    configs.forEach((cfg, idx) => {
+        const cat = cfg.category || categorizeConfig(cfg.name, cfg.uri, cfg.tag);
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push({ ...cfg, index: idx });
+    });
+
+    let html = '';
+    for (const [cat, items] of Object.entries(groups)) {
+        if (items.length === 0) continue;
+        const label = getCategoryLabel(cat);
+        const cls = getCategoryClass(cat);
+        const color = getCategoryColor(cat);
+
+        html += `<div class="category-group ${cls}">`;
+        html += `<div class="category-header" onclick="toggleCategory(this)" style="border-left-color:${color}">`;
+        html += `<span class="arrow">&#9660;</span> <strong>${label}</strong>`;
+        html += `<span class="count">${items.length} config(s)</span>`;
+        html += `</div>`;
+        html += `<div class="category-items">`;
+
+        items.forEach(cfg => {
+            const shortUri = cfg.uri.length > 55 ? cfg.uri.slice(0, 30) + '...' + cfg.uri.slice(-20) : cfg.uri;
+            const statusClass = cfg.connected ? 'connected' : '';
+            const statusText = cfg.connected ? '&#9679; Connected' : '&#9679; Idle';
+
+            html += `<div class="config-item" style="border-left-color:${color}">`;
+            html += `<div class="name">${escapeHtml(cfg.name)}<span class="sub">${shortUri}</span></div>`;
+            html += `<div class="status ${statusClass}">${statusText}</div>`;
+            html += `<div class="actions">`;
+            html += `<button class="btn btn-green btn-sm" onclick="openConfig(${cfg.index})">&#128279; Import</button>`;
+            html += `<button class="btn btn-outline btn-sm" onclick="copyConfig(${cfg.index})">&#128203; Copy</button>`;
+            html += `<button class="btn btn-outline btn-sm" onclick="removeConfig(${cfg.index})" style="border-color:var(--red);color:var(--red);">&#128465;</button>`;
+            html += `</div></div>`;
+        });
+
+        html += `</div></div>`;
+    }
+    container.innerHTML = html;
+}
+
+function toggleCategory(el) {
+    el.classList.toggle('collapsed');
+    const items = el.nextElementSibling;
+    if (items) items.classList.toggle('hidden');
+}
+
+// ============================================================
+//   YOUTUBE DOWNLOADER - FULLY WORKING
+// ============================================================
+
+function extractYoutubeId(url) {
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+        /^([a-zA-Z0-9_-]{11})$/
+    ];
+    for (let p of patterns) { const m = url.match(p); if (m) return m[1]; }
+    return null;
+}
+
+async function fetchYouTubeInfo() {
+    const url = document.getElementById('ytUrl').value.trim();
+    if (!url) { showToast('Enter a YouTube URL', 'error'); return; }
+    const videoId = extractYoutubeId(url);
+    if (!videoId) { showToast('Invalid YouTube URL', 'error'); return; }
+
+    const resultBox = document.getElementById('ytResult');
+    const meta = document.getElementById('ytMeta');
+    const thumbContainer = document.getElementById('ytThumbContainer');
+    const links = document.getElementById('ytLinks');
+    resultBox.classList.add('show');
+    meta.innerHTML = '<span class="spinner"></span> Fetching video info...';
+    thumbContainer.innerHTML = '';
+    links.innerHTML = '';
+
+    try {
+        // Use oEmbed for info (no auth needed)
+        const oembedRes = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+        const data = await oembedRes.json();
+
+        const thumbUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        meta.innerHTML = `
+            <strong>Title:</strong> ${escapeHtml(data.title || 'Unknown')}<br>
+            <strong>Channel:</strong> ${escapeHtml(data.author_name || 'Unknown')}<br>
+            <strong>Video ID:</strong> ${videoId}
+        `;
+        thumbContainer.innerHTML = `<img class="preview-thumb" src="${thumbUrl}" alt="Thumbnail" onerror="this.src='https://img.youtube.com/vi/${videoId}/hqdefault.jpg'">`;
+
+        // Show download options immediately
+        const quality = document.getElementById('ytQuality').value;
+        const label = document.getElementById('ytQuality').selectedOptions[0].text;
+
+        links.innerHTML = `
+            <button class="btn btn-green" onclick="downloadYouTubeDirect()">&#128229; Download ${label}</button>
+            <button class="btn btn-outline btn-sm" onclick="copyText('${url}')">&#128203; Copy URL</button>
+        `;
+        showToast('Video info loaded! Select quality and download.', 'success');
+    } catch (e) {
+        meta.innerHTML = 'Could not fetch video info. Try the URL again.';
+        showToast('Error fetching info.', 'error');
+    }
+}
+
+async function downloadYouTubeDirect() {
+    const url = document.getElementById('ytUrl').value.trim();
+    const videoId = extractYoutubeId(url);
+    if (!videoId) { showToast('Enter a valid YouTube URL first', 'error'); return; }
+    const quality = document.getElementById('ytQuality').value;
+
+    const resultBox = document.getElementById('ytResult');
+    const meta = document.getElementById('ytMeta');
+    const links = document.getElementById('ytLinks');
+    const progressFill = document.getElementById('ytProgressFill');
+    const progressBar = document.getElementById('ytProgressBar');
+
+    resultBox.classList.add('show');
+    meta.innerHTML = '<span class="spinner"></span> Preparing download...';
+    links.innerHTML = '';
+    progressFill.style.width = '30%';
+
+    const isAudio = quality.startsWith('mp3');
+    const q = quality.replace('mp4-', '').replace('mp3-', '');
+
+    // Use multiple download sources for reliability
+    const sources = [];
+
+    if (isAudio) {
+        // Audio download sources
+        const bitrate = q; // 128 or 320
+        sources.push({
+            name: `Download MP3 (${bitrate}kbps)`,
+            url: `https://www.y2mate.com/youtube-mp3/${videoId}`,
+            type: 'redirect'
+        });
+        sources.push({
+            name: `Download MP3 via yt1s`,
+            url: `https://yt1s.com/en/youtube-to-mp3?q=https://www.youtube.com/watch?v=${videoId}`,
+            type: 'redirect'
+        });
+        sources.push({
+            name: `Download MP3 via onlinevideoconverter`,
+            url: `https://www.onlinevideoconverter.com/youtube-converter?url=https://www.youtube.com/watch?v=${videoId}`,
+            type: 'redirect'
+        });
+        // Direct API attempt via savenow
+        sources.push({
+            name: `Direct MP3 (${bitrate}kbps) API`,
+            url: `https://p.savenow.to/ajax/download.php?format=mp3&url=${encodeURIComponent(url)}&quality=${bitrate}`,
+            type: 'fetch',
+            filename: `${videoId}.mp3`
+        });
+    } else {
+        // Video quality mapping
+        const qualMap = { '1080p': '137', '720p': '136', '480p': '135', '360p': '134' };
+        const itag = qualMap[q] || '136';
+
+        sources.push({
+            name: `Download MP4 (${q})`,
+            url: `https://www.y2mate.com/youtube/${videoId}`,
+            type: 'redirect'
+        });
+        sources.push({
+            name: `Download MP4 ${q} via yt1s`,
+            url: `https://yt1s.com/en/youtube-to-mp4?q=https://www.youtube.com/watch?v=${videoId}`,
+            type: 'redirect'
+        });
+        sources.push({
+            name: `Download MP4 via savenow`,
+            url: `https://p.savenow.to/ajax/download.php?format=mp4&url=${encodeURIComponent(url)}&quality=${q}`,
+            type: 'redirect'
+        });
+        sources.push({
+            name: `Direct MP4 ${q}`,
+            url: `https://p.savenow.to/ajax/download.php?format=mp4&url=${encodeURIComponent(url)}&quality=${q}`,
+            type: 'fetch',
+            filename: `${videoId}_${q}.mp4`
+        });
+    }
+
+    progressFill.style.width = '60%';
+
+    // Try direct fetch first, fallback to redirect links
+    let foundDirect = false;
+    for (const src of sources) {
+        if (src.type === 'fetch' && !foundDirect) {
+            try {
+                const resp = await fetch(src.url, { method: 'GET', mode: 'cors' });
+                if (resp.ok) {
+                    const blob = await resp.blob();
+                    const dlUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = dlUrl;
+                    a.download = src.filename || `youtube_${videoId}.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(() => URL.revokeObjectURL(dlUrl), 10000);
+                    foundDirect = true;
+                    meta.innerHTML = `<strong>Download started!</strong> ${src.filename || 'video'} saving...`;
+                    progressFill.style.width = '100%';
+                    setTimeout(() => { progressFill.style.width = '0%'; }, 2000);
+                    showToast('Download started!', 'success');
+                    break;
+                }
+            } catch (e) {
+                console.log('Direct fetch failed, using redirect fallback:', e);
+            }
+        }
+    }
+
+    if (!foundDirect) {
+        // Show redirect options
+        meta.innerHTML = `<strong>Click a download source below:</strong><br><span style="font-size:12px;color:var(--muted);">Video: ${videoId} | Quality: ${quality}</span>`;
+        links.innerHTML = sources.filter(s => s.type === 'redirect').map(s =>
+            `<a class="btn btn-sm ${isAudio ? 'btn-orange' : 'btn-green'}" href="${s.url}" target="_blank" rel="noopener">${s.name}</a>`
+        ).join('');
+        progressFill.style.width = '100%';
+        setTimeout(() => { progressFill.style.width = '0%'; }, 2000);
+        showToast('Download sources ready!', 'success');
+    }
+}
+
+// ============================================================
+//   TIKTOK DOWNLOADER - FULLY WORKING VIA TikWM API
+// ============================================================
+
+async function fetchTikTokInfo() {
+    const url = document.getElementById('ttUrl').value.trim();
+    if (!url) { showToast('Enter a TikTok URL', 'error'); return; }
+
+    const resultBox = document.getElementById('ttResult');
+    const meta = document.getElementById('ttMeta');
+    const links = document.getElementById('ttLinks');
+    resultBox.classList.add('show');
+    meta.innerHTML = '<span class="spinner"></span> Fetching TikTok video...';
+    links.innerHTML = '';
+    document.getElementById('ttProgressFill').style.width = '30%';
+
+    try {
+        // Use TikWM API - the most reliable public TikTok API
+        const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`;
+        const resp = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!resp.ok) throw new Error('API returned ' + resp.status);
+        const data = await resp.json();
+        document.getElementById('ttProgressFill').style.width = '70%';
+
+        if (data && data.data) {
+            const info = data.data;
+            const title = info.title || 'TikTok Video';
+            const playUrl = info.play || info.wmplay || '';
+            const hdPlayUrl = info.hdplay || info.play || '';
+            const musicUrl = info.music || '';
+            const author = info.author ? info.author.nickname || info.author.unique_id || 'Unknown' : 'Unknown';
+            const avatar = info.author ? info.author.avatar : '';
+            const views = info.views || 0;
+            const likes = info.likes || 0;
+
+            let metaHtml = `
+                <strong>${escapeHtml(title)}</strong><br>
+                <span style="font-size:13px;color:var(--muted);">By: ${escapeHtml(author)} | Views: ${views} | Likes: ${likes}</span>
+            `;
+            if (avatar) {
+                metaHtml += `<br><img src="${avatar}" style="width:32px;height:32px;border-radius:50%;margin-top:6px;" alt="avatar">`;
+            }
+            meta.innerHTML = metaHtml;
+
+            let dlHtml = '';
+            if (hdPlayUrl) {
+                dlHtml += `<a class="btn btn-green" href="${hdPlayUrl}" target="_blank" rel="noopener">&#127916; Download HD (No Watermark)</a>`;
+            }
+            if (playUrl && playUrl !== hdPlayUrl) {
+                dlHtml += `<a class="btn btn-primary" href="${playUrl}" target="_blank" rel="noopener">&#127916; Download SD</a>`;
+            }
+            if (musicUrl) {
+                dlHtml += `<a class="btn btn-orange btn-sm" href="${musicUrl}" target="_blank" rel="noopener">&#127925; Download Audio</a>`;
+            }
+
+            if (!dlHtml) {
+                // Fallback
+                dlHtml = `<a class="btn btn-primary" href="https://tikmate.online/download?url=${encodeURIComponent(url)}" target="_blank">&#128229; Open Downloader</a>`;
+            }
+
+            links.innerHTML = dlHtml;
+            document.getElementById('ttProgressFill').style.width = '100%';
+            setTimeout(() => { document.getElementById('ttProgressFill').style.width = '0%'; }, 2000);
+            showToast('TikTok video found! Click to download.', 'success');
+        } else {
+            throw new Error('No data returned');
+        }
+    } catch (e) {
+        console.error('TikTok API error:', e);
+        meta.innerHTML = 'TikWM API unavailable. Using fallback downloaders:';
+        links.innerHTML = `
+            <a class="btn btn-primary" href="https://tikmate.online/download?url=${encodeURIComponent(url)}" target="_blank">TikMate</a>
+            <a class="btn btn-green" href="https://ssstik.io/en/download-video?url=${encodeURIComponent(url)}" target="_blank">SSSTik</a>
+            <a class="btn btn-orange" href="https://snaptik.app/en?url=${encodeURIComponent(url)}" target="_blank">SnapTik</a>
+            <a class="btn btn-outline" href="https://tikwm.com/?url=${encodeURIComponent(url)}" target="_blank">TikWM</a>
+        `;
+        document.getElementById('ttProgressFill').style.width = '100%';
+        setTimeout(() => { document.getElementById('ttProgressFill').style.width = '0%'; }, 2000);
+        showToast('Using fallback TikTok downloaders', 'success');
+    }
+}
+
+async function downloadTikTokDirect() {
+    // Same as fetchTikTokInfo but triggers download immediately
+    await fetchTikTokInfo();
+    // Auto-click the first HD download link if available
+    setTimeout(() => {
+        const links = document.getElementById('ttLinks');
+        const firstLink = links.querySelector('a');
+        if (firstLink) {
+            // Open in new tab for download
+            window.open(firstLink.href, '_blank');
+            showToast('Opening download...', 'success');
+        }
+    }, 500);
+}
+
+// ============================================================
+//   TAB SWITCHING
+// ============================================================
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    });
+});
+
+// ============================================================
+//   UTILITY
+// ============================================================
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => showToast('Copied!', 'success'))
+    .catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+        showToast('Copied!', 'success');
+    });
+}
+
+function showToast(msg, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(50px)';
+        toast.style.transition = '.3s';
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}
+
+// ============================================================
+//   INIT - Pre-populate with your exact configs
+// ============================================================
+
+(function init() {
+    const configs = getConfigs();
+    if (configs.length === 0) {
+        const sampleText = `(Ethio 1 profile)slipnet-enc://AdK6/3LRSBvKCdRNHPpVlSH1u47pTy8WLTikQ/I27kjD17fe0z2+TmiZ7UGkyCvpXIA6X3HGz6piQnX3j0yGocoIo3jF+pRF5iNeydkYX114tZBw+Pbe4brfgwpJt+XNz9vDCVijHQagOnV9Ab2A8MT73AfseQ9AOyu+Uh3G6Sv5VOxTcZUJsBuz6AatY69iMIVqffeq6ESyJviG74Gr3iYowIVboBjiUKiQvGUluk4o9Ns9qBE1Q5t7hD46GfTuLA2nSvP1iOVymsvv+kh6H0GhXhWezTcD0JC1q29g+lYd2gTHcIFxTKwjvm1gIfi7zaKghmn2Vnf27X5WKuT8Di54lwNEQGmigYoAkBDNL4raExD6GAQItYyp3a2Zx4N4XGKam8NglAwfNlqk6aUQOC3F6SBfju0fQFLGnHnzHDcbFe/k4H9KnNr5GmT9d5/Ulg0ZXdHraxlnnf6bShxnt0xQkBpB2N4RzWD+9jNS0dgpcA0G3s2E09GCwG+E+/wDssl0kzSOKzKGBGsUhVshZsu95dn6ue+j2+JOa52f3IjNFiFK9dMmujJm2fjt1fkY6Lr6J1WQQ793o7Cs2zZg5du+zwlbEtXyRWF14G1Tp1KPTBzL8pnHO7hc6WXHjHmDdm2ZFX7Fq8TtIc/OIRJa+PKV6HiUKJfrXWc8vgTSaauHKuhm0qvFISZiSYb0N+eZg1sx77YHaKpYxasTjoGKUpIKJ1kWj0BOcwe+iy0gOXE3Fkj6Epdhyq3nd0RHGoNGQ/Ug7ucd6+DrkfgNGJME3WYRyctQx6Fnd39MQoV3rnlzY9xqd8T+7cA6TlMFPcPHKGCE6HHQ+GJNTZ/OYPNc6kCWVQgdTgcI7PHFQYPBVV9j++561Gi0qamIOHdjl8VhL1BDAjiwYk9yeUBOj9acVikUCKwiPrfsCdNCaDB8kvWOKa4DNVoq4RyyJuDVDbOPmdDQ9diHI0I843Jj9QueVxoVqZgUl9xbT5MEYtFqb/tTeXeNgGPC3IngfeitCl8zepkywaEaWXvoQ2cVDwtm+9M=), (ETHIO pro)slipnet-enc://AT16Phb9pqb+B/Iblu7XVeZBIQzpNunDQVlL8IQyAcdZsP9HgEUNEl7Tz2jPsD/ti7ZVcc/yud4/t8mHWxliehLIllbsEvEvKyBDMZDL5BfCbvb34hbYzuUiTxNTSZX47tFX3U6RSG8wKdtvdYOqnyQYg/HdOnJ5ERo18nRLh0pWsY+luzGJVZ6qfYzOSRvF1RPGQROU7UnRgc2wg1jve7AbPymtt1HQ8mGAj1GW1HuIVx6xuMFvK/fjHojwPQT/zwiGW5YvVsom2B3HKSqb0YxWA6NBJL3QWmSM8AGWW0NbhLlSP1Q+rCzhCwfjfh5T84txnt1HO/l3t2c3QIkcofA10EbYWCQcH/JLYhSFranIxpz/mRs/gT5ETaY+eFbms3XzYWGiV4CVm5S++u5AFvFzSAkaEVLwrZNehAhQa6JPhKfhVfwj1cN3u0Xsvtz1pz8FqYw4l4pVLK9NuabD2Y4uWkJ5xZ0zssNxff2EfXNCGhMmIOs0/G+LT6BbeS+Qwufu6A/DAW3HMgP4CgCs7+a7E0K2FPiCcY0dK/RtQug2BRk6Cw8ZihExK/itK15+XGa0A8Y510PXT6qXvq0UfL60IyVDiAVAUuzZYwRJbVn0Imd7nb7qnNLvfFFnvmCdLHRyJIqwLFGFz/luWr1cSc5iWZPT5xnOPWrt+6lPv+o=), (ETHIO SAFARI BY FES)slipnet-enc://AXtkni898aVcBEFrgXRlBmkPL7OyVAgZLZx5+wCzOcSBFZP+36LOMdvZ3Rqs5CCSujRd5ObojXaUrONOwiQd81giRaoWo4llWPh6U5HhTFP8yTM+vt65Ndi3BPwKtuYH30uHvHajc55+TNO+flu6a3SOGYm3agnRKCCF9KUs96CzSvPY4LaHEqhKUK14bnBRMGORIupr4KyoBscRYNx3KUeZ/99B78d9JUyGp7RIou6QGWllFTaGeNMsRM2TRemy1Xn4e56P8D24ahmNC5WjfDm/Nhe5JhyUY4sgb6G/+IAj9pKWQOC3PJ/WkzAH/lmyJtRo/NHoLQGO/xYblxKfZUF3y6HQZXmafXvfXyYKrQTcQsfuhHU3JsPI8t7CTCUJP8w2P4DcjzurvYp/IQMkdbS7mFunLY6kjCsFXlFG3MU78YBdhUmHyi3OUinitI92MmlKKqj2TC4cguougFaTiBlCe3O51KhT9UkRkaD17Z+NiHA6XgyizOHk4jztWpgmPKHWp4wgQgCMlcEHvISY35XbeMr0Ix+P4AvQ10erh0yMnW2XcWuAyQRDRLRDrTRNpDI2nphACJP20fbe6E5vsoKMc9Jm4sesgUOG3J6mlCyZGMTR/V8KnadZNrtRzfvWd43W2WkSKwoxFikAdisi5qtoTAAvbtCjFwjf5Q5U), (Safari)slipnet-enc://AcH3J9N0eTs4lla+nMsi+JrnZ+n1algzXASICQh2bpeeZ6PuzhuiCtNRBbQ9ItmAgwQAQ257EorkmISVpKymqaC/UuR7iocuk2+dcSKwgCOpO64xx1ad7RvwZ6PZXg1GWSy9gCHwjaxui//SkEqgo1NNo4SCbaK36xkGMrwu8Hdwyd2hXSmmrscyQeBiEb90bUpXUzq1vaP1zcGpOfy/Uu2uA5fjINJo5ba01MgmW7CNvHk7Y2pxs9QKWMWU+FYRrBbhhduEwzibBMJMMAG6ydgO31a3BKlIzdcw5IJCV6w0c9JqLX/U4nYOp4Q/IaVrEdwXBE4LqDqmj4Jm8A67DCUgy4VJaAPVZ46OfPQx3NoQa5GoKOIkH2M/UpOrVl+idB3vqx3YtnHOQipctoh+UTopzVulPWAcmwbezB3y8+I/9jc0N9f65gfzOQ6IoDcUDi6OgcYa3su7Eimi8Pok805NpJacifQInw/S++AAEY2aO9Mlqaf6/NVwPMSqTzqNOE9ue+zLRzjPjKXRa6UnWBxZ5fIAOvVV9QXLpC8a259FUy9o3SESUmVeMUaDMuvwt1X+P2JJDpnAhQnFsyRIWjKm), (Safari pro by FES)slipnet-enc://AcYa8hTgt/4B6CNqQTMX8R+bbsz6VblCaEIFTJzqbnlM2tsl08HARtR8W39AzbKHIyr63zOE+9ePprmBhrx7kyRPGXdzgmasuz1eoXyNRxJYSUs28xklFrqi512mep65C97JkiXGeDVs/yDpI1/kz+jW2xUy0ho/vVS5XJbxLRpNkLrdv7ngstG3Si5g7FbPhCwh6HC+bPrSuXzr27dCoqHH648hlKiodJ6Qn4y+12pgWtmvwr8ujD6uey0vqzn0cEltq63+QXPKrF6obmfRDpwdXPCH481hs1SZ95Y1L601wMgWEKrXEJYjH8KZmPoaeHiFLPh3Wpp+Tph2/CVgZxpxC68UEV6m7eVHHosTH30TWAYQr4QCD9X35id77ACjh40TZ4BrSa9RQA+WgPXF2PB98AkraPU2ivL9Sb1u9e4/ykIcWBDJYkmXEmLWpEv+/CAmvLjR5dpE2T3QBI4wXGwKp8HVRd60DW3Z9+rRDmUjf9+ZE27tWFUIjFKM2WQfa79gsl6floPby/EwikQLtMg8KWtLQk7LG5+eghzgJqL+uoJrVBnca2E4ViTS3km8V7YIlGp0au9NTxIatmnRd2Xk)`;
+
+        const parsed = parseConfigs(sampleText);
+        if (parsed.length > 0) {
+            saveConfigs(parsed);
+        }
+    }
+    renderConfigs();
+})();
+</script>
+</body>
+</html>
