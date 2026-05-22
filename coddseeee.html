@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FES SLIPNET VPN config Importer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: radial-gradient(ellipse at 20% 30%, #0a0a2e 0%, #060618 40%, #000000 100%);
+            color: #ddddf0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                radial-gradient(2px 2px at 15% 25%, rgba(0,212,255,0.3), transparent),
+                radial-gradient(2px 2px at 35% 65%, rgba(123,47,247,0.3), transparent),
+                radial-gradient(2px 2px at 55% 15%, rgba(255,78,205,0.3), transparent),
+                radial-gradient(2px 2px at 75% 75%, rgba(0,212,255,0.2), transparent),
+                radial-gradient(2px 2px at 90% 30%, rgba(255,200,0,0.2), transparent),
+                radial-gradient(2px 2px at 10% 80%, rgba(123,47,247,0.2), transparent),
+                radial-gradient(2px 2px at 50% 50%, rgba(0,200,255,0.15), transparent),
+                radial-gradient(3px 3px at 25% 45%, rgba(255,200,0,0.25), transparent),
+                radial-gradient(2px 2px at 70% 20%, rgba(255,78,205,0.2), transparent),
+                radial-gradient(2px 2px at 45% 85%, rgba(0,212,255,0.2), transparent),
+                radial-gradient(2px 2px at 85% 55%, rgba(255,200,0,0.15), transparent),
+                radial-gradient(3px 3px at 5% 50%, rgba(123,47,247,0.2), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 1.5rem 1.2rem 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            padding: 2.5rem 0 1.5rem;
+            position: relative;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 15%;
+            right: 15%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00d4ff, #7b2ff7, #ff4ecd, transparent);
+            border-radius: 2px;
+        }
+
+        .logo-3d {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 0.3rem;
+            filter: drop-shadow(0 0 20px rgba(0,212,255,0.3)) drop-shadow(0 0 40px rgba(123,47,247,0.2));
+            animation: float 4s ease-in-out infinite;
+            text-shadow: 0 0 30px rgba(0,212,255,0.4), 0 0 60px rgba(123,47,247,0.2);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-8px) scale(1.03); }
+        }
+
+        header h1 {
+            font-size: 2.6rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d4ff 0%, #7b2ff7 40%, #ff4ecd 70%, #ffcc00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            filter: drop-shadow(0 2px 20px rgba(123,47,247,0.3));
+        }
+
+        header .sub {
+            color: #8888bb;
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        header .sub span {
+            display: inline-block;
+            background: linear-gradient(135deg, #00d4ff22, #7b2ff722);
+            border: 1px solid rgba(0,212,255,0.15);
+            padding: 0.2rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: #88ccff;
+            font-weight: 600;
+            margin-top: 0.3rem;
+        }
+
+        .tg-card {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            background: linear-gradient(135deg, rgba(0,136,204,0.12), rgba(0,136,204,0.04));
+            border: 1px solid rgba(0,136,204,0.2);
+            border-radius: 16px;
+            padding: 1rem 1.8rem;
+            margin: 1.5rem 0 2rem;
+            text-decoration: none;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,136,204,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tg-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(0,136,204,0.05), transparent, rgba(0,136,204,0.05), transparent);
+            animation: rotateGlow 6s linear infinite;
+        }
+
+        @keyframes rotateGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tg-card:hover {
+            background: linear-gradient(135deg, rgba(0,136,204,0.18), rgba(0,136,204,0.08));
+            transform: scale(1.02) translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,136,204,0.15);
+            border-color: rgba(0,136,204,0.35);
+        }
+
+        .tg-card .icon { font-size: 1.8rem; position: relative; z-index: 1; }
+        .tg-card .text { position: relative; z-index: 1; }
+        .tg-card .hl { color: #55ccff; }
+        .tg-card .arr { color: #55ccff; font-size: 1.2rem; position: relative; z-index: 1; }
+
+        .howto {
+            background: linear-gradient(135deg, rgba(255,200,0,0.06), rgba(255,150,0,0.03));
+            border: 1px solid rgba(255,200,0,0.12);
+            border-radius: 14px;
+            padding: 1rem 1.4rem;
+            margin-bottom: 2rem;
+            font-size: 0.85rem;
+            color: #cccca8;
+            line-height: 1.7;
+            box-shadow: 0 2px 15px rgba(255,200,0,0.03);
+        }
+
+        .howto strong { color: #ffdd66; font-size: 0.9rem; }
+        .howto ol { margin: 0.3rem 0 0 1.4rem; padding: 0; }
+        .howto li { margin-bottom: 0.2rem; color: #bbbb99; }
+        .howto code { background: rgba(255,255,255,0.06); padding: 0.1rem 0.5rem; border-radius: 5px; font-size: 0.8rem; color: #ffeeaa; }
+
+        .bulk-section {
+            display: flex;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0.5rem 0 2rem;
+        }
+
+        .bulk-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #ccccee;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 0.7rem 1.5rem;
+            border-radius: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .bulk-btn:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+            border-color: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .bulk-btn:active { transform: scale(0.97); }
+
+        .bulk-btn.pro {
+            background: linear-gradient(135deg, rgba(255,78,205,0.15), rgba(123,47,247,0.15), rgba(0,212,255,0.08));
+            border-color: rgba(255,78,205,0.2);
+            color: #ffccee;
+            box-shadow: 0 2px 15px rgba(255,78,205,0.08);
+        }
+
+        .bulk-btn.pro:hover {
+            background: linear-gradient(135deg, rgba(255,78,205,0.22), rgba(123,47,247,0.22), rgba(0,212,255,0.12));
+            border-color: rgba(255,78,205,0.35);
+            box-shadow: 0 6px 25px rgba(255,78,205,0.12);
+        }
+
+        .category {
+            background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 22px;
+            padding: 1.6rem 1.5rem 1.8rem;
+            margin-bottom: 1.6rem;
+            backdrop-filter: blur(12px);
+            transition: all 0.35s ease;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, currentColor, transparent);
+            opacity: 0.3;
+            border-radius: 22px 22px 0 0;
+        }
+
+        .category.ethio::before { color: #00d4ff; }
+        .category.safari::before { color: #ffcc00; }
+
+        .category:hover {
+            border-color: rgba(255,255,255,0.12);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+            transform: translateY(-2px);
+        }
+
+        .cat-title {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .cat-title .emoji { font-size: 1.8rem; }
+        .cat-title .emoji.glow-blue { filter: drop-shadow(0 0 12px rgba(0,212,255,0.3)); }
+        .cat-title .emoji.glow-gold { filter: drop-shadow(0 0 12px rgba(255,200,0,0.3)); }
+
+        .cat-count {
+            font-size: 0.78rem;
+            color: #7777aa;
+            margin: 0.2rem 0 1.2rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+
+        .profile {
+            background: linear-gradient(145deg, rgba(0,0,0,0.35), rgba(0,0,0,0.2));
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.1rem 1.3rem;
+            margin-bottom: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            position: relative;
+        }
+
+        .profile:last-child { margin-bottom: 0; }
+
+        .profile:hover {
+            background: linear-gradient(145deg, rgba(0,0,0,0.45), rgba(255,255,255,0.03));
+            border-color: rgba(0,212,255,0.12);
+            transform: translateY(-2px) scale(1.005);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.25), 0 0 20px rgba(0,212,255,0.03);
+        }
+
+        .profile.updated { border-left: 3px solid; }
+        .profile.updated.blue-border { border-left-color: #00d4ff; }
+        .profile.updated.gold-border { border-left-color: #ffcc00; }
+
+        .info { flex: 1; min-width: 0; }
+
+        .info .name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .info .name .tag {
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 0.15rem 0.6rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info .name .tag.purple {
+            background: linear-gradient(135deg, rgba(123,47,247,0.25), rgba(123,47,247,0.1));
+            color: #b088ff;
+            border: 1px solid rgba(123,47,247,0.15);
+        }
+
+        .info .name .tag.green {
+            background: linear-gradient(135deg, rgba(0,200,80,0.15), rgba(0,200,80,0.05));
+            color: #55dd88;
+            border: 1px solid rgba(0,200,80,0.1);
+        }
+
+        .info .name .tag.blue-glow {
+            background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,212,255,0.05));
+            color: #55ddff;
+            border: 1px solid rgba(0,212,255,0.1);
+            box-shadow: 0 0 10px rgba(0,212,255,0.08);
+        }
+
+        .info .name .tag.gold-glow {
+            background: linear-gradient(135deg, rgba(255,200,0,0.15), rgba(255,200,0,0.05));
+            color: #ffdd44;
+            border: 1px solid rgba(255,200,0,0.1);
+            box-shadow: 0 0 10px rgba(255,200,0,0.08);
+        }
+
+        .info .desc {
+            font-size: 0.78rem;
+            color: #7878aa;
+            margin-top: 0.15rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .info .desc .dot {
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            margin-right: 0.2rem;
+        }
+
+        .info .desc .dot.blue { background: #00d4ff; box-shadow: 0 0 6px rgba(0,212,255,0.5); }
+        .info .desc .dot.gold { background: #ffcc00; box-shadow: 0 0 6px rgba(255,200,0,0.5); }
+
+        .import-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.8rem;
+            padding: 0.65rem 1.3rem;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0,212,255,0.15), 0 2px 5px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .import-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .import-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(0,212,255,0.25), 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .import-btn:hover::before { opacity: 1; }
+        .import-btn:active { transform: scale(0.96); }
+        .import-btn .arrow { font-size: 1.2rem; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3)); }
+
+        .import-btn.gold {
+            background: linear-gradient(135deg, #ff8800, #ffcc00, #ffaa00);
+            box-shadow: 0 4px 15px rgba(255,200,0,0.15), 0 2px 5px rgba(0,0,0,0.2);
+            color: #1a1a2e;
+        }
+
+        .import-btn.gold:hover {
+            background: linear-gradient(135deg, #ff9900, #ffdd33, #ffbb00);
+            box-shadow: 0 8px 30px rgba(255,200,0,0.25), 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem 0 1.5rem;
+            color: #555588;
+            font-size: 0.82rem;
+            position: relative;
+        }
+
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 30%;
+            right: 30%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+        }
+
+        footer a { color: #7777dd; text-decoration: none; transition: color 0.2s; }
+        footer a:hover { color: #9999ff; }
+
+        footer .heart {
+            display: inline-block;
+            color: #ff4ecd;
+            animation: heartBeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        @media (max-width: 600px) {
+            header h1 { font-size: 1.6rem; }
+            .logo-3d { font-size: 2.8rem; }
+            .category { padding: 1.2rem 1rem; }
+            .profile {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.7rem;
+            }
+            .import-btn { justify-content: center; width: 100%; padding: 0.7rem 1rem; }
+            .bulk-section { flex-direction: column; align-items: center; }
+            .bulk-btn { width: 100%; justify-content: center; }
+            .howto { font-size: 0.8rem; }
+            .cat-title { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <header>
+        <span class="logo-3d">&#127760;</span>
+        <h1>FES SLIPNET VPN Importer</h1>
+        <div class="sub">
+            Direct import &bull; Categorized &bull; One-tap
+            <br><span>&#9889; No copy-paste needed</span>
+        </div>
+    </header>
+
+    <a class="tg-card" href="https://t.me/Free_Ethio_server_FES" target="_blank" rel="noopener">
+        <span class="icon">&#128172;</span>
+        <span class="text">Join <span class="hl">@Free_Ethio_server_FES</span> on Telegram &#8599;</span>
+    </a>
+
+    <div class="howto">
+        <strong>&#9889; How to import:</strong> Tap any <strong>Import</strong> button below &mdash; Slipnet VPN opens and imports automatically.
+        <br>Or: Open Slipnet &#8594; tap <strong>+</strong> &#8594; <strong>Import from URI</strong> &#8594; long-press &amp; copy any Import link, then paste.
+    </div>
+
+    <div class="bulk-section">
+        <button class="bulk-btn" onclick="importCategory('ethio')">
+            &#127758; Import All Ethio (3)
+        </button>
+        <button class="bulk-btn" onclick="importCategory('safari')">
+            &#129409; Import All Safari (2)
+        </button>
+        <button class="bulk-btn pro" onclick="importAll()">
+            &#9889; Import All 5 Profiles
+        </button>
+    </div>
+
+    <!-- ===== ETHIO CATEGORY ===== -->
+    <div class="category ethio">
+        <div class="cat-title">
+            <span class="emoji glow-blue">&#127758;</span>
+            <span style="background:linear-gradient(135deg,#00d4ff,#7b2ff7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Ethio</span>
+        </div>
+        <div class="cat-count">
+            <span>&#128209; 3 profiles &mdash; Primary, Pro &amp; FES Edition</span>
+            <span style="color:#00d4ff;">&#9670; Blue category</span>
+        </div>
+
+        <div class="profile">
+            <div class="info">
+                <div class="name">
+                    &#128218; Ethio 1
+                    <span class="tag purple">Primary</span>
+                </div>
+                <div class="desc">
+                    <span class="dot blue"></span> Standard Ethio configuration
+                </div>
+            </div>
+            <a class="import-btn" href="slipnet-enc://AdK6/3LRSBvKCdRNHPpVlSH1u47pTy8WLTikQ/I27kjD17fe0z2+TmiZ7UGkyCvpXIA6X3HGz6piQnX3j0yGocoIo3jF+pRF5iNeydkYX114tZBw+Pbe4brfgwpJt+XNz9vDCVijHQagOnV9Ab2A8MT73AfseQ9AOyu+Uh3G6Sv5VOxTcZUJsBuz6AatY69iMIVqffeq6ESyJviG74Gr3iYowIVboBjiUKiQvGUluk4o9Ns9qBE1Q5t7hD46GfTuLA2nSvP1iOVymsvv+kh6H0GhXhWezTcD0JC1q29g+lYd2gTHcIFxTKwjvm1gIfi7zaKghmn2Vnf27X5WKuT8Di54lwNEQGmigYoAkBDNL4raExD6GAQItYyp3a2Zx4N4XGKam8NglAwfNlqk6aUQOC3F6SBfju0fQFLGnHnzHDcbFe/k4H9KnNr5GmT9d5/Ulg0ZXdHraxlnnf6bShxnt0xQkBpB2N4RzWD+9jNS0dgpcA0G3s2E09GCwG+E+/wDssl0kzSOKzKGBGsUhVshZsu95dn6ue+j2+JOa52f3IjNFiFK9dMmujJm2fjt1fkY6Lr6J1WQQ793o7Cs2zZg5du+zwlbEtXyRWF14G1Tp1KPTBzL8pnHO7hc6WXHjHmDdm2ZFX7Fq8TtIc/OIRJa+PKV6HiUKJfrXWc8vgTSaauHKuhm0qvFISZiSYb0N+eZg1sx77YHaKpYxasTjoGKUpIKJ1kWj0BOcwe+iy0gOXE3Fkj6Epdhyq3nd0RHGoNGQ/Ug7ucd6+DrkfgNGJME3WYRyctQx6Fnd39MQoV3rnlzY9xqd8T+7cA6TlMFPcPHKGCE6HHQ+GJNTZ/OYPNc6kCWVQgdTgcI7PHFQYPBVV9j++561Gi0qamIOHdjl8VhL1BDAjiwYk9yeUBOj9acVikUCKwiPrfsCdNCaDB8kvWOKa4DNVoq4RyyJuDVDbOPmdDQ9diHI0I843Jj9QueVxoVqZgUl9xbT5MEYtFqb/tTeXeNgGPC3IngfeitCl8zepkywaEaWXvoQ2cVDwtm+9M=" target="_self">
+                <span class="arrow">&#9889;</span> Import
+            </a>
+        </div>
+
+        <div class="profile">
+            <div class="info">
+                <div class="name">
+                    &#128737; ETHIO Pro
+                    <span class="tag purple">Professional</span>
+                </div>
+                <div class="desc">
+                    <span class="dot blue"></span> Enhanced Ethio &bull; Optimized routing
+                </div>
+            </div>
+            <a class="import-btn" href="slipnet-enc://AT16Phb9pqb+B/Iblu7XVeZBIQzpNunDQVlL8IQyAcdZsP9HgEUNEl7Tz2jPsD/ti7ZVcc/yud4/t8mHWxliehLIllbsEvEvKyBDMZDL5BfCbvb34hbYzuUiTxNTSZX47tFX3U6RSG8wKdtvdYOqnyQYg/HdOnJ5ERo18nRLh0pWsY+luzGJVZ6qfYzOSRvF1RPGQROU7UnRgc2wg1jve7AbPymtt1HQ8mGAj1GW1HuIVx6xuMFvK/fjHojwPQT/zwiGW5YvVsom2B3HKSqb0YxWA6NBJL3QWmSM8AGWW0NbhLlSP1Q+rCzhCwfjfh5T84txnt1HO/l3t2c3QIkcofA10EbYWCQcH/JLYhSFranIxpz/mRs/gT5ETaY+eFbms3XzYWGiV4CVm5S++u5AFvFzSAkaEVLwrZNehAhQa6JPhKfhVfwj1cN3u0Xsvtz1pz8FqYw4l4pVLK9NuabD2Y4uWkJ5xZ0zssNxff2EfXNCGhMmIOs0/G+LT6BbeS+Qwufu6A/DAW3HMgP4CgCs7+a7E0K2FPiCcY0dK/RtQug2BRk6Cw8ZihExK/itK15+XGa0A8Y510PXT6qXvq0UfL60IyVDiAVAUuzZYwRJbVn0Imd7nb7qnNLvfFFnvmCdLHRyJIqwLFGFz/luWr1cSc5iWZPT5xnOPWrt+6lPv+o=" target="_self">
+                <span class="arrow">&#9889;</span> Import
+            </a>
+        </div>
+
+        <div class="profile">
+            <div class="info">
+                <div class="name">
+                    &#127752; ETHIO SAFARI BY FES
+                    <span class="tag purple">FES Edition</span>
+                </div>
+                <div class="desc">
+                    <span class="dot blue"></span> FES-tuned Safari overlay on Ethio backbone
+                </div>
+            </div>
+            <a class="import-btn" href="slipnet-enc://AXtkni898aVcBEFrgXRlBmkPL7OyVAgZLZx5+wCzOcSBFZP+36LOMdvZ3Rqs5CCSujRd5ObojXaUrONOwiQd81giRaoWo4llWPh6U5HhTFP8yTM+vt65Ndi3BPwKtuYH30uHvHajc55+TNO+flu6a3SOGYm3agnRKCCF9KUs96CzSvPY4LaHEqhKUK14bnBRMGORIupr4KyoBscRYNx3KUeZ/99B78d9JUyGp7RIou6QGWllFTaGeNMsRM2TRemy1Xn4e56P8D24ahmNC5WjfDm/Nhe5JhyUY4sgb6G/+IAj9pKWQOC3PJ/WkzAH/lmyJtRo/NHoLQGO/xYblxKfZUF3y6HQZXmafXvfXyYKrQTcQsfuhHU3JsPI8t7CTCUJP8w2P4DcjzurvYp/IQMkdbS7mFunLY6kjCsFXlFG3MU78YBdhUmHyi3OUinitI92MmlKKqj2TC4cguougFaTiBlCe3O51KhT9UkRkaD17Z+NiHA6XgyizOHk4jztWpgmPKHWp4wgQgCMlcEHvISY35XbeMr0Ix+P4AvQ10erh0yMnW2XcWuAyQRDRLRDrTRNpDI2nphACJP20fbe6E5vsoKMc9Jm4sesgUOG3J6mlCyZGMTR/V8KnadZNrtRzfvWd43W2WkSKwoxFikAdisi5qtoTAAvbtCjFwjf5Q5U" target="_self">
+                <span class="arrow">&#9889;</span> Import
+            </a>
+        </div>
+    </div>
+
+    <!-- ===== SAFARI CATEGORY ===== -->
+    <div class="category safari">
+        <div class="cat-title">
+            <span class="emoji glow-gold">&#129409;</span>
+            <span style="background:linear-gradient(135deg,#ffcc00,#ff8800);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Safari</span>
+        </div>
+        <div class="cat-count">
+            <span>&#128209; 2 profiles &mdash; Base &amp; FES Pro &bull; Both updated</span>
+            <span style="color:#ffcc00;">&#9672; Gold category</span>
+        </div>
+
+        <div class="profile updated blue-border">
+            <div class="info">
+                <div class="name">
+                    &#127917; Safari
+                    <span class="tag blue-glow">&#9889; UPDATED</span>
+                </div>
+                <div class="desc">
+                    <span class="dot gold"></span> Safari base &mdash; New config
+                </div>
+            </div>
+            <a class="import-btn gold" href="slipnet-enc://AcYa8hTgt/4B6CNqQTMX8R+bbsz6VblCaEIFTJzqbnlM2tsl08HARtR8W39AzbKHIyr63zOE+9ePprmBhrx7kyRPGXdzgmasuz1eoXyNRxJYSUs28xklFrqi512mep65C97JkiXGeDVs/yDpI1/kz+jW2xUy0ho/vVS5XJbxLRpNkLrdv7ngstG3Si5g7FbPhCwh6HC+bPrSuXzr27dCoqHH648hlKiodJ6Qn4y+12pgWtmvwr8ujD6uey0vqzn0cEltq63+QXPKrF6obmfRDpwdXPCH481hs1SZ95Y1L601wMgWEKrXEJYjH8KZmPoaeHiFLPh3Wpp+Tph2/CVgZxpxC68UEV6m7eVHHosTH30TWAYQr4QCD9X35id77ACjh40TZ4BrSa9RQA+WgPXF2PB98AkraPU2ivL9Sb1u9e4/ykIcWBDJYkmXEmLWpEv+/CAmvLjR5dpE2T3QBI4wXGwKp8HVRd60DW3Z9+rRDmUjf9+ZE27tWFUIjFKM2WQfa79gsl6floPby/EwikQLtMg8KWtLQk7LG5+eghzgJqL+uoJrVBnca2E4ViTS3km8V7YIlGp0au9NTxIatmnRd2Xk" target="_self">
+                <span class="arrow">&#9889;</span> Import
+            </a>
+        </div>
+
+        <div class="profile updated gold-border">
+            <div class="info">
+                <div class="name">
+                    &#127775; Safari Pro by FES
+                    <span class="tag gold-glow">&#9889; UPDATED</span>
+                </div>
+                <div class="desc">
+                    <span class="dot gold"></span> FES-enhanced &bull; Advanced routing &mdash; New config
+                </div>
+            </div>
+            <a class="import-btn gold" href="slipnet-enc://AWdVXKoLKOR+Lr4DAEcI4R7OB+BbOfeODjebEb+9LgDDF/bbaXk27M7EARrmLu0GFNhZ7XTwI/DhFdI0qMoHLQFe5KFnZ0/ICtnQTnCH6gkL0XR/okybqQRuuMogmdNChSteltDbloHbM72SfCCbQXlPgbEVM+msSHLAkgZqfC9WfAXuMDT+spENU8otjfQarnxFChmJ+GZisUhJwFjm6KwT276xeTy+22yGYIfVxCBvgmZ6y3SGPzmAXHP5oWjfs6Gc++1ej6eoj/jEQ5lKtM/n+JJ4RnDZaV9/f06Bf0FQk7vgSxBOxwbsIhrWXpliz7rYI8qLmVm2Ev1OT+yNbKvfPCf/NRWy5hCMlvWaDZYfiCkMV/KcvekY3sf4fEg2cmBkFQYSTU2f2TZFKtAXPKkeBCu8o4lGsu30hocusTM8SGHdgkHalgHBjylgt+X06xYyT9Co/4RNSjEGSDtjuqsCcKxh8ht+QBPRqZAUxIlUC9U=" target="_self">
+                <span class="arrow">&#9889;</span> Import
+            </a>
+        </div>
+    </div>
+
+    <footer>
+        Powered by <a href="https://t.me/Free_Ethio_server_FES" target="_blank" rel="noopener">FES &mdash; Free Ethio Server</a>
+        &middot; Made with <span class="heart">&#10084;</span> for the community
+        &middot; Slipnet VPN profiles &bull; Authorized use only
+    </footer>
+</div>
+
+<script>
+const profileData = {
+    ethio: [
+        { name: 'Ethio 1', uri: 'slipnet-enc://AdK6/3LRSBvKCdRNHPpVlSH1u47pTy8WLTikQ/I27kjD17fe0z2+TmiZ7UGkyCvpXIA6X3HGz6piQnX3j0yGocoIo3jF+pRF5iNeydkYX114tZBw+Pbe4brfgwpJt+XNz9vDCVijHQagOnV9Ab2A8MT73AfseQ9AOyu+Uh3G6Sv5VOxTcZUJsBuz6AatY69iMIVqffeq6ESyJviG74Gr3iYowIVboBjiUKiQvGUluk4o9Ns9qBE1Q5t7hD46GfTuLA2nSvP1iOVymsvv+kh6H0GhXhWezTcD0JC1q29g+lYd2gTHcIFxTKwjvm1gIfi7zaKghmn2Vnf27X5WKuT8Di54lwNEQGmigYoAkBDNL4raExD6GAQItYyp3a2Zx4N4XGKam8NglAwfNlqk6aUQOC3F6SBfju0fQFLGnHnzHDcbFe/k4H9KnNr5GmT9d5/Ulg0ZXdHraxlnnf6bShxnt0xQkBpB2N4RzWD+9jNS0dgpcA0G3s2E09GCwG+E+/wDssl0kzSOKzKGBGsUhVshZsu95dn6ue+j2+JOa52f3IjNFiFK9dMmujJm2fjt1fkY6Lr6J1WQQ793o7Cs2zZg5du+zwlbEtXyRWF14G1Tp1KPTBzL8pnHO7hc6WXHjHmDdm2ZFX7Fq8TtIc/OIRJa+PKV6HiUKJfrXWc8vgTSaauHKuhm0qvFISZiSYb0N+eZg1sx77YHaKpYxasTjoGKUpIKJ1kWj0BOcwe+iy0gOXE3Fkj6Epdhyq3nd0RHGoNGQ/Ug7ucd6+DrkfgNGJME3WYRyctQx6Fnd39MQoV3rnlzY9xqd8T+7cA6TlMFPcPHKGCE6HHQ+GJNTZ/OYPNc6kCWVQgdTgcI7PHFQYPBVV9j++561Gi0qamIOHdjl8VhL1BDAjiwYk9yeUBOj9acVikUCKwiPrfsCdNCaDB8kvWOKa4DNVoq4RyyJuDVDbOPmdDQ9diHI0I843Jj9QueVxoVqZgUl9xbT5MEYtFqb/tTeXeNgGPC3IngfeitCl8zepkywaEaWXvoQ2cVDwtm+9M=' },
+        { name: 'ETHIO Pro', uri: 'slipnet-enc://AT16Phb9pqb+B/Iblu7XVeZBIQzpNunDQVlL8IQyAcdZsP9HgEUNEl7Tz2jPsD/ti7ZVcc/yud4/t8mHWxliehLIllbsEvEvKyBDMZDL5BfCbvb34hbYzuUiTxNTSZX47tFX3U6RSG8wKdtvdYOqnyQYg/HdOnJ5ERo18nRLh0pWsY+luzGJVZ6qfYzOSRvF1RPGQROU7UnRgc2wg1jve7AbPymtt1HQ8mGAj1GW1HuIVx6xuMFvK/fjHojwPQT/zwiGW5YvVsom2B3HKSqb0YxWA6NBJL3QWmSM8AGWW0NbhLlSP1Q+rCzhCwfjfh5T84txnt1HO/l3t2c3QIkcofA10EbYWCQcH/JLYhSFranIxpz/mRs/gT5ETaY+eFbms3XzYWGiV4CVm5S++u5AFvFzSAkaEVLwrZNehAhQa6JPhKfhVfwj1cN3u0Xsvtz1pz8FqYw4l4pVLK9NuabD2Y4uWkJ5xZ0zssNxff2EfXNCGhMmIOs0/G+LT6BbeS+Qwufu6A/DAW3HMgP4CgCs7+a7E0K2FPiCcY0dK/RtQug2BRk6Cw8ZihExK/itK15+XGa0A8Y510PXT6qXvq0UfL60IyVDiAVAUuzZYwRJbVn0Imd7nb7qnNLvfFFnvmCdLHRyJIqwLFGFz/luWr1cSc5iWZPT5xnOPWrt+6lPv+o=' },
+        { name: 'ETHIO SAFARI BY FES', uri: 'slipnet-enc://AXtkni898aVcBEFrgXRlBmkPL7OyVAgZLZx5+wCzOcSBFZP+36LOMdvZ3Rqs5CCSujRd5ObojXaUrONOwiQd81giRaoWo4llWPh6U5HhTFP8yTM+vt65Ndi3BPwKtuYH30uHvHajc55+TNO+flu6a3SOGYm3agnRKCCF9KUs96CzSvPY4LaHEqhKUK14bnBRMGORIupr4KyoBscRYNx3KUeZ/99B78d9JUyGp7RIou6QGWllFTaGeNMsRM2TRemy1Xn4e56P8D24ahmNC5WjfDm/Nhe5JhyUY4sgb6G/+IAj9pKWQOC3PJ/WkzAH/lmyJtRo/NHoLQGO/xYblxKfZUF3y6HQZXmafXvfXyYKrQTcQsfuhHU3JsPI8t7CTCUJP8w2P4DcjzurvYp/IQMkdbS7mFunLY6kjCsFXlFG3MU78YBdhUmHyi3OUinitI92MmlKKqj2TC4cguougFaTiBlCe3O51KhT9UkRkaD17Z+NiHA6XgyizOHk4jztWpgmPKHWp4wgQgCMlcEHvISY35XbeMr0Ix+P4AvQ10erh0yMnW2XcWuAyQRDRLRDrTRNpDI2nphACJP20fbe6E5vsoKMc9Jm4sesgUOG3J6mlCyZGMTR/V8KnadZNrtRzfvWd43W2WkSKwoxFikAdisi5qtoTAAvbtCjFwjf5Q5U' }
+    ],
+    safari: [
+        { name: 'Safari (Base)', uri: 'slipnet-enc://AcYa8hTgt/4B6CNqQTMX8R+bbsz6VblCaEIFTJzqbnlM2tsl08HARtR8W39AzbKHIyr63zOE+9ePprmBhrx7kyRPGXdzgmasuz1eoXyNRxJYSUs28xklFrqi512mep65C97JkiXGeDVs/yDpI1/kz+jW2xUy0ho/vVS5XJbxLRpNkLrdv7ngstG3Si5g7FbPhCwh6HC+bPrSuXzr27dCoqHH648hlKiodJ6Qn4y+12pgWtmvwr8ujD6uey0vqzn0cEltq63+QXPKrF6obmfRDpwdXPCH481hs1SZ95Y1L601wMgWEKrXEJYjH8KZmPoaeHiFLPh3Wpp+Tph2/CVgZxpxC68UEV6m7eVHHosTH30TWAYQr4QCD9X35id77ACjh40TZ4BrSa9RQA+WgPXF2PB98AkraPU2ivL9Sb1u9e4/ykIcWBDJYkmXEmLWpEv+/CAmvLjR5dpE2T3QBI4wXGwKp8HVRd60DW3Z9+rRDmUjf9+ZE27tWFUIjFKM2WQfa79gsl6floPby/EwikQLtMg8KWtLQk7LG5+eghzgJqL+uoJrVBnca2E4ViTS3km8V7YIlGp0au9NTxIatmnRd2Xk' },
+        { name: 'Safari Pro by FES', uri: 'slipnet-enc://AWdVXKoLKOR+Lr4DAEcI4R7OB+BbOfeODjebEb+9LgDDF/bbaXk27M7EARrmLu0GFNhZ7XTwI/DhFdI0qMoHLQFe5KFnZ0/ICtnQTnCH6gkL0XR/okybqQRuuMogmdNChSteltDbloHbM72SfCCbQXlPgbEVM+msSHLAkgZqfC9WfAXuMDT+spENU8otjfQarnxFChmJ+GZisUhJwFjm6KwT276xeTy+22yGYIfVxCBvgmZ6y3SGPzmAXHP5oWjfs6Gc++1ej6eoj/jEQ5lKtM/n+JJ4RnDZaV9/f06Bf0FQk7vgSxBOxwbsIhrWXpliz7rYI8qLmVm2Ev1OT+yNbKvfPCf/NRWy5hCMlvWaDZYfiCkMV/KcvekY3sf4fEg2cmBkFQYSTU2f2TZFKtAXPKkeBCu8o4lGsu30hocusTM8SGHdgkHalgHBjylgt+X06xYyT9Co/4RNSjEGSDtjuqsCcKxh8ht+QBPRqZAUxIlUC9U=' }
+    ]
+};
+
+function importCategory(category) {
+    const profiles = profileData[category];
+    if (!profiles || profiles.length === 0) return;
+    window.location.href = profiles[0].uri;
+    const remaining = profiles.length - 1;
+    showNotice(`&#127760; Opening ${profiles[0].name} in Slipnet...\n\nThen tap Import for the other ${remaining} profile${remaining > 1 ? 's' : ''} in this category.`);
+}
+
+function importAll() {
+    window.location.href = profileData.ethio[0].uri;
+    showNotice(
+        '&#127760; Opening Ethio 1 in Slipnet VPN...\n\n' +
+        'Then import the rest:\n' +
+        '&#9707; ETHIO Pro\n' +
+        '&#9707; ETHIO SAFARI BY FES\n' +
+        '&#9707; Safari (UPDATED)\n' +
+        '&#9707; Safari Pro by FES (UPDATED)'
+    );
+}
+
+function showNotice(msg) {
+    const existing = document.getElementById('fes-notice');
+    if (existing) existing.remove();
+
+    const div = document.createElement('div');
+    div.id = 'fes-notice';
+    div.style.cssText = [
+        'position: fixed',
+        'bottom: 1.5rem',
+        'left: 50%',
+        'transform: translateX(-50%)',
+        'background: linear-gradient(145deg, rgba(10,10,30,0.97), rgba(20,10,50,0.97))',
+        'backdrop-filter: blur(16px)',
+        'border: 1px solid rgba(0,212,255,0.12)',
+        'border-radius: 16px',
+        'padding: 1.2rem 1.8rem',
+        'max-width: 420px',
+        'width: calc(100% - 2rem)',
+        'color: #ddddf0',
+        'font-size: 0.85rem',
+        'line-height: 1.6',
+        'z-index: 9999',
+        'box-shadow: 0 10px 50px rgba(0,0,0,0.6), 0 0 30px rgba(0,212,255,0.05)',
+        'white-space: pre-line'
+    ].join(';');
+
+    div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.7rem;">
+            <div>${msg}</div>
+            <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#8888cc;font-size:1.4rem;cursor:pointer;padding:0 0.2rem;line-height:1;">&times;</button>
+        </div>
+    `;
+
+    document.body.appendChild(div);
+    setTimeout(() => { const el = document.getElementById('fes-notice'); if (el) el.remove(); }, 8000);
+}
+</script>
+
+</body>
+</html>
